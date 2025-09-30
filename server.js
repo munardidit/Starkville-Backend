@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: true, // Allow all origins for now to avoid CORS issues
+  origin: true, 
   credentials: true
 }));
 app.use(express.json());
@@ -69,7 +69,6 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     message: 'Server is running',
@@ -77,7 +76,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Test email transporter config
+
 app.get('/api/test-email', async (req, res) => {
   try {
     await transporter.verify();
@@ -87,7 +86,7 @@ app.get('/api/test-email', async (req, res) => {
   }
 });
 
-// Start the server
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌐 Visit: http://localhost:${PORT}`);
