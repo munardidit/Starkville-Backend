@@ -6,14 +6,32 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors({
-  origin: ['https://starkville.tech'], 
-  methods: ['POST', 'GET'],
-  credentials: true
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'https://starkville.tech',
+      'https://www.starkville.tech',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('starkville.tech')) {
+      callback(null, true);
+    } else {
+      
+      callback(null, true);
+    }
+  },
+  methods: ['POST', 'GET', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
-
+// Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -28,7 +46,7 @@ if (process.env.SENDGRID_API_KEY) {
   console.error('❌ SendGrid API key is missing!');
 }
 
-// Root route -
+// Root route
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -58,11 +76,14 @@ app.get('/api/health', (req, res) => {
 app.post('/api/contact', async (req, res) => {
   try {
     console.log('📨 Received contact form submission:', req.body);
+    console.log('📱 Request origin:', req.get('origin'));
+    console.log('🌐 User agent:', req.get('user-agent'));
 
     const { name, email, phone, location, service, message } = req.body;
 
     // Validation
     if (!name || !email || !phone || !location || !service) {
+      console.log('❌ Validation failed: Missing required fields');
       return res.status(400).json({
         error: 'Missing required fields',
         details: 'Please fill in all required fields'
@@ -72,6 +93,7 @@ app.post('/api/contact', async (req, res) => {
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log('❌ Validation failed: Invalid email format');
       return res.status(400).json({
         error: 'Invalid email format',
         details: 'Please provide a valid email address'
