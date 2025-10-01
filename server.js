@@ -13,6 +13,10 @@ app.use(cors({
   credentials: true
 }));
 
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Configure SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -21,8 +25,34 @@ if (process.env.SENDGRID_API_KEY) {
   console.log('✅ SendGrid API key configured');
   console.log(`📧 Emails will be sent from: ${process.env.EMAIL_USER}`);
 } else {
-  console.error(' SendGrid API key is missing!');
+  console.error('❌ SendGrid API key is missing!');
 }
+
+// Root route -
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: '🚀 Starkville Backend API is running',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      contact: '/api/contact (POST)'
+    },
+    documentation: 'Visit https://starkville.tech for more information'
+  });
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    emailService: 'SendGrid',
+    emailFrom: process.env.EMAIL_USER
+  });
+});
 
 // Contact form endpoint
 app.post('/api/contact', async (req, res) => {
@@ -168,18 +198,18 @@ To reply: Just hit "Reply" and your response will be sent from ${process.env.EMA
   }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    emailService: 'SendGrid'
-  });
-});
-
-// 404 handler
+// 404 handler 
 app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({ 
+    error: 'Route not found',
+    path: req.path,
+    method: req.method,
+    availableEndpoints: {
+      root: 'GET /',
+      health: 'GET /api/health',
+      contact: 'POST /api/contact'
+    }
+  });
 });
 
 // Error handler
@@ -193,4 +223,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📧 Email service: SendGrid`);
   console.log(`📬 Sending emails from: ${process.env.EMAIL_USER}`);
+  console.log(`🌐 Visit https://starkville-backend.onrender.com to test`);
 });
